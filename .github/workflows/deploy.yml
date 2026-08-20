@@ -7,12 +7,29 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# Fix 1: Explicitly grant permissions required by actions/deploy-pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent concurrent deployments from overlapping
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    # Fix 2: Attach the deployment environment to output the page URL
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
@@ -26,7 +43,6 @@ jobs:
 
       - name: Checking the website
         run: curl -I http://localhost:8080
-
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
